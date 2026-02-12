@@ -21,11 +21,14 @@ def capture_screen(region=None):
 
             sct_img = sct.grab(monitor)
             return Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
-    except Exception as e:
-        logging.error(f"Error in capture_screen: {e}")
+    except mss.exception.ScreenShotError as e:
+        logging.warning("mss capture failed, falling back to pyautogui: %s", e)
         # Fallback to PyAutoGUI
         import pyautogui
         return pyautogui.screenshot(region=region)
+    except Exception as e:
+        logging.exception("Unexpected error in capture_screen: %s", e)
+        raise
 
 def image_to_base64(image):
     try:
@@ -39,5 +42,7 @@ def image_to_base64(image):
 def save_image(image, filepath):
     try:
         image.save(filepath)
+        return True
     except Exception as e:
-        logging.error(f"Error saving image: {e}")
+        logging.exception("Error saving image: %s", e)
+        return False

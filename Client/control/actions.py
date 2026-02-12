@@ -28,6 +28,10 @@ class ActionExecutor:
         action_request: dict with "action" and "params"
         Example: {"action": "move_to", "params": {"x": 100, "y": 200}}
         """
+        is_valid, error_msg = self.validate_request(action_request)
+        if not is_valid:
+            return {"status": "error", "message": f"Invalid request: {error_msg}"}
+
         action_name = action_request.get("action")
         params = action_request.get("params", {})
 
@@ -39,7 +43,7 @@ class ActionExecutor:
             result = func(**params)
             return {"status": "success", "result": result}
         except Exception as e:
-            logging.error(f"Action execution failed: {e}")
+            logging.exception("Action execution failed: %s", e)
             return {"status": "error", "message": str(e)}
 
     def validate_request(self, action_request):

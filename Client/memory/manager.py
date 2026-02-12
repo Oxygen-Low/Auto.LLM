@@ -31,7 +31,11 @@ class MemoryManager:
 
         formatted = "Persistent Memories:\n"
         for m in memories:
-            formatted += f"- [ID: {m['id']}] {m['content']} (Tags: {', '.join(m['tags'])})\n"
+            m_id = m.get('id', 'unknown')
+            content = m.get('content', 'no content')
+            tags = m.get('tags') or []
+            tags_str = ", ".join(map(str, tags))
+            formatted += f"- [ID: {m_id}] {content} (Tags: {tags_str})\n"
         return formatted
 
     def get_full_context_string(self):

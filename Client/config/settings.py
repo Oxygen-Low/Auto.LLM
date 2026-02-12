@@ -1,6 +1,8 @@
 import json
 import os
 import sys
+import shlex
+import logging
 from pathlib import Path
 
 DEFAULT_CONFIG = {
@@ -17,11 +19,12 @@ DEFAULT_CONFIG = {
 }
 
 class ConfigLoader:
-    def __init__(self, config_path="Client/config/client_config.json"):
+    def __init__(self, config_path=None):
+        if config_path is None:
+            config_path = Path(__file__).resolve().parent / "client_config.json"
         self.config_path = Path(config_path)
         self.settings = DEFAULT_CONFIG.copy()
         self._load_config()
-        self._handle_autostart()
 
     def _load_config(self):
         if not self.config_path.exists():
@@ -30,9 +33,13 @@ class ConfigLoader:
             try:
                 with open(self.config_path, "r") as f:
                     user_settings = json.load(f)
-                    self.settings.update(user_settings)
+                    for key, value in user_settings.items():
+                        if key in self.settings:
+                            self.settings[key] = value
+                        else:
+                            logging.warning(f"Unknown configuration key ignored: {key}")
             except Exception as e:
-                print(f"Error loading config: {e}. Using defaults.")
+                logging.error(f"Error loading config: {e}. Using defaults.")
 
     def _save_config(self):
         try:
@@ -42,7 +49,8 @@ class ConfigLoader:
         except Exception as e:
             print(f"Error saving config: {e}")
 
-    def _handle_autostart(self):
+    def handle_autostart(self):
+        """Public method to trigger autostart configuration based on current settings."""
         if sys.platform.startswith("linux"):
             self._setup_linux_autostart()
         elif sys.platform == "win32":
@@ -59,9 +67,10 @@ class ConfigLoader:
                 # We assume main.py is in the parent of the config directory
                 # But since we're in Client/config, it's in Client/
                 script_path = Path(__file__).parent.parent / "main.py"
+                exec_command = f"{shlex.quote(sys.executable)} {shlex.quote(str(script_path.absolute()))}"
                 content = f"""[Desktop Entry]
 Type=Application
-Exec={sys.executable} {script_path.absolute()}
+Exec={exec_command}
 Hidden=false
 NoDisplay=false
 X-GNOME-Autostart-enabled=true
@@ -94,10 +103,10 @@ Comment=LLM Computer Control Client
             alt_path = model_dir / model_path
             if alt_path.exists():
                 self.settings["model_path"] = str(alt_path.absolute())
+            elif model_path.exists():
+                self.settings["model_path"] = str(model_path.absolute())
             else:
-                # Still check if it exists as relative to current working dir
-                if not model_path.exists():
-                     raise ValueError(f"Configuration Error: model_path '{model_path}' does not exist.")
+                raise ValueError(f"Configuration Error: model_path '{model_path}' does not exist.")
         elif not model_path.exists():
              raise ValueError(f"Configuration Error: model_path '{model_path}' does not exist.")
 

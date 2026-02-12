@@ -1,7 +1,11 @@
 import json
 import os
+import uuid
 import time
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 class HighMemory:
     def __init__(self, storage_path="Client/memory/high_memory.json", limit=10):
@@ -16,7 +20,7 @@ class HighMemory:
             with open(self.storage_path, "r") as f:
                 return json.load(f)
         except Exception as e:
-            print(f"Error loading high memory: {e}")
+            logger.exception("Error loading high memory: %s", e)
             return []
 
     def _save_memories(self):
@@ -25,14 +29,14 @@ class HighMemory:
             with open(self.storage_path, "w") as f:
                 json.dump(self.memories, f, indent=4)
         except Exception as e:
-            print(f"Error saving high memory: {e}")
+            logger.exception("Error saving high memory: %s", e)
 
     def add_memory(self, content, tags=None):
         if len(self.memories) >= self.limit:
             raise ValueError(f"High memory limit reached ({self.limit} items). Please remove an item before adding a new one.")
 
         entry = {
-            "id": int(time.time() * 1000),
+            "id": str(uuid.uuid4()),
             "content": content,
             "created_timestamp": time.time(),
             "tags": tags or []
@@ -42,11 +46,11 @@ class HighMemory:
         return entry["id"]
 
     def remove_memory(self, memory_id):
-        self.memories = [m for m in self.memories if m["id"] != memory_id]
+        self.memories = [m for m in self.memories if str(m["id"]) != str(memory_id)]
         self._save_memories()
 
     def get_all(self):
-        return self.memories
+        return self.memories.copy()
 
     def get_count(self):
         return len(self.memories)

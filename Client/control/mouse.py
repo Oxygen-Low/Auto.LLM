@@ -7,7 +7,7 @@ pyautogui.FAILSAFE = True
 
 def validate_coordinates(x, y):
     screen_width, screen_height = pyautogui.size()
-    if not (0 <= x <= screen_width and 0 <= y <= screen_height):
+    if not (0 <= x < screen_width and 0 <= y < screen_height):
         raise ValueError(f"Coordinates ({x}, {y}) are out of bounds for screen size {screen_width}x{screen_height}")
 
 def move_to(x, y, duration=0.2):
@@ -19,21 +19,27 @@ def move_to(x, y, duration=0.2):
         raise
 
 def left_click(x=None, y=None, duration=0.1):
+    if (x is None) != (y is None):
+        raise ValueError("Both x and y must be provided together or both must be None.")
+
     try:
         if x is not None and y is not None:
             move_to(x, y, duration=duration)
         pyautogui.click()
     except Exception as e:
-        logging.error(f"Error in left_click: {e}")
+        logging.exception("Error in left_click: %s", e)
         raise
 
 def right_click(x=None, y=None, duration=0.1):
+    if (x is None) != (y is None):
+        raise ValueError("Both x and y must be provided together or both must be None.")
+
     try:
         if x is not None and y is not None:
             move_to(x, y, duration=duration)
         pyautogui.rightClick()
     except Exception as e:
-        logging.error(f"Error in right_click: {e}")
+        logging.exception("Error in right_click: %s", e)
         raise
 
 def drag(start_x, start_y, end_x, end_y, button='left', duration=0.5):

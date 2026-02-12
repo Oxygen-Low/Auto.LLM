@@ -20,8 +20,8 @@ class ModelLoader:
             logging.info(f"Loading text model from {model_path}...")
             self.text_model = Llama(
                 model_path=model_path,
-                n_ctx=self.config.get("context_size"),
-                n_gpu_layers=self.config.get("n_gpu_layers"),
+                n_ctx=self.config.get("context_size", 2048),
+                n_gpu_layers=self.config.get("n_gpu_layers", 0),
                 verbose=False
             )
             logging.info("Text model loaded successfully.")
@@ -46,8 +46,8 @@ class ModelLoader:
                     self.vision_model = Llama(
                         model_path=vision_model_path,
                         chat_handler=chat_handler,
-                        n_ctx=self.config.get("context_size"),
-                        n_gpu_layers=self.config.get("n_gpu_layers"),
+                        n_ctx=self.config.get("context_size", 2048),
+                        n_gpu_layers=self.config.get("n_gpu_layers", 0),
                         verbose=False
                     )
                     logging.info("Vision model loaded successfully.")
@@ -77,9 +77,6 @@ class ModelLoader:
         # a CLIP adapter. This implementation assumes the vision_model is either
         # a multi-modal model or handles image input via a chat-like interface.
 
-        # Default prompt for vision model
-        prompt = "USER: <image>\nDescribe this computer screen for a text-based AI assistant. What do you see? What windows are open? What are the coordinates of important elements?\nASSISTANT:"
-
         try:
             # If the model is a Chat completion compatible model, we use chat format
             messages = [
@@ -93,24 +90,14 @@ class ModelLoader:
             ]
 
             # This requires the vision_model to have a chat_handler set up during initialization.
-            # For this task, we provide the structure.
             response = self.vision_model.create_chat_completion(
                 messages=messages,
                 max_tokens=512
             )
             return response['choices'][0]['message']['content']
         except Exception as e:
-            logging.error(f"Vision description failed: {e}")
-            # Fallback to simple completion if chat completion fails
-            try:
-                # Some models might just take the base64 in the prompt or use a special token
-                response = self.vision_model(
-                    f"Describe this image: {base64_image[:100]}...", # Truncated for safety in logs
-                    max_tokens=128
-                )
-                return response['choices'][0]['text']
-            except:
-                return f"Error describing image: {e}"
+            logging.exception("Vision description failed: %s", e)
+            return f"Error describing image: {e}"
 
     def unload_models(self):
         if self.text_model:

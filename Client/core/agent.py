@@ -18,25 +18,36 @@ class Agent:
         self.info_text = load_info()
         self.context_builder = ContextBuilder(self.info_text, self.memory_manager)
         self.running = False
+        self._stopped = False
+        self.consecutive_errors = 0
+        self.max_consecutive_errors = config.get("max_consecutive_errors", 5)
+        self.base_backoff = config.get("base_backoff", 1.0)
 
     def start(self):
         logging.info("Starting Agent...")
-        self.model_loader.load_models()
-        self.running = True
         try:
+            self.model_loader.load_models()
+            self.running = True
+            self._stopped = False
             self._main_loop()
         except KeyboardInterrupt:
             logging.info("Agent stopped by user.")
         except Exception as e:
-            logging.error(f"Agent encountered a fatal error: {e}")
-            traceback.print_exc()
+            logging.exception("Agent encountered a fatal error: %s", e)
         finally:
             self.stop()
 
     def stop(self):
+        if self._stopped:
+            return
         logging.info("Stopping Agent...")
         self.running = False
-        self.model_loader.unload_models()
+        if self.model_loader:
+            try:
+                self.model_loader.unload_models()
+            except Exception as e:
+                logging.exception("Error unloading models: %s", e)
+        self._stopped = True
 
     def _main_loop(self):
         while self.running:
@@ -59,7 +70,8 @@ class Agent:
                 # 3. Query LLM
                 logging.info("Querying LLM...")
                 response_text = self.model_loader.generate_completion(prompt)
-                logging.info(f"LLM Response: {response_text}")
+                logging.debug("LLM Response (full): %s", response_text)
+                logging.info("LLM Response (truncated): %s", response_text[:100] + ("..." if len(response_text) > 100 else ""))
 
                 # 4. Parse Response
                 action_request = self._parse_response(response_text)
@@ -69,40 +81,78 @@ class Agent:
                     continue
 
                 # 5. Execute Action
-                logging.info(f"Executing action: {action_request}")
-                if action_request["action"] == "add_to_high_memory":
-                    content = action_request["params"].get("content")
-                    if content:
-                        try:
-                            self.memory_manager.add_to_high_memory(content)
-                            result = {"status": "success", "message": "Added to high memory"}
-                        except Exception as e:
-                            result = {"status": "error", "message": str(e)}
-                    else:
-                        result = {"status": "error", "message": "Missing content for high memory"}
+                if not isinstance(action_request, dict) or "action" not in action_request:
+                    result = {"status": "error", "message": "Malformed action_request: missing 'action'"}
                 else:
-                    result = self.action_executor.execute(action_request)
+                    logging.info(f"Executing action: {action_request.get('action')}")
+                    action_name = action_request["action"]
+                    params = action_request.get("params", {})
+
+                    if action_name == "add_to_high_memory":
+                        if isinstance(params, dict) and "content" in params:
+                            content = params["content"]
+                            try:
+                                self.memory_manager.add_to_high_memory(content)
+                                result = {"status": "success", "message": "Added to high memory"}
+                            except Exception as e:
+                                result = {"status": "error", "message": str(e)}
+                        else:
+                            result = {"status": "error", "message": "Malformed action_request: missing 'params/content'"}
+                    else:
+                        result = self.action_executor.execute(action_request)
 
                 # 6. Record to Memory
-                self.memory_manager.add_event("action", f"Executed {action_request['action']}", {"result": result})
+                if isinstance(action_request, dict) and "action" in action_request:
+                    self.memory_manager.add_event("action", f"Executed {action_request['action']}", {"result": result})
                 self.memory_manager.add_event("observation", observation)
 
+                self.consecutive_errors = 0
                 # Small delay between loops
                 time.sleep(1)
 
             except Exception as e:
-                logging.error(f"Error in main loop: {e}")
-                time.sleep(5)
+                self.consecutive_errors += 1
+                logging.exception("Error in main loop (error %d/%d): %s",
+                                  self.consecutive_errors, self.max_consecutive_errors, e)
+
+                if self.consecutive_errors >= self.max_consecutive_errors:
+                    logging.error("Max consecutive errors reached. Triggering shutdown.")
+                    self.stop()
+                    break
+
+                backoff_delay = self.base_backoff * (2 ** min(self.consecutive_errors, 6))
+                logging.info("Waiting %.2f seconds before retry...", backoff_delay)
+                time.sleep(backoff_delay)
 
     def _parse_response(self, text):
-        try:
-            # Try to find JSON in the response
-            start_idx = text.find('{')
-            end_idx = text.rfind('}')
-            if start_idx != -1 and end_idx != -1:
-                json_str = text[start_idx:end_idx+1]
-                return json.loads(json_str)
-            return None
-        except Exception as e:
-            logging.error(f"Failed to parse JSON from response: {e}")
-            return None
+        # 1. Look for fenced JSON blocks
+        import re
+        fenced_match = re.search(r"```json\s*(.*?)\s*```", text, re.DOTALL)
+        if fenced_match:
+            try:
+                return json.loads(fenced_match.group(1))
+            except json.JSONDecodeError:
+                pass
+
+        # 2. Robust balanced brace extraction
+        candidates = []
+        stack = 0
+        start = -1
+        for i, char in enumerate(text):
+            if char == '{':
+                if stack == 0:
+                    start = i
+                stack += 1
+            elif char == '}':
+                if stack > 0:
+                    stack -= 1
+                    if stack == 0:
+                        candidates.append(text[start:i+1])
+
+        for cand in candidates:
+            try:
+                return json.loads(cand)
+            except json.JSONDecodeError:
+                continue
+
+        return None

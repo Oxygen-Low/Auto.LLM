@@ -15,6 +15,8 @@ class ShortTermMemory:
         self.memory.append(entry)
 
     def get_recent(self, n):
+        if n <= 0:
+            return []
         items = list(self.memory)
         return items[-n:] if n < len(items) else items
 

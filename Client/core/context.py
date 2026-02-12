@@ -22,8 +22,6 @@ Available Actions:
 Response Format:
 You MUST respond with a valid JSON object containing the next action to take.
 Example: {{"action": "left_click", "params": {{"x": 100, "y": 200}}}}
-If you need to wait or have finished, you can use a "wait" or "finish" action (though not explicitly implemented in control, you can suggest it).
-Actually, stick to the implemented actions.
 
 Current Machine Information:
 {info_text}

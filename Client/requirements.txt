@@ -1,5 +1,5 @@
-llama-cpp-python
-pyautogui
-mss
-pillow
-python-xlib
+llama-cpp-python==0.2.76
+pyautogui==0.9.54
+mss==9.0.1
+pillow==10.3.0
+pyperclip==1.8.2

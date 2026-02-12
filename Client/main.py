@@ -4,11 +4,11 @@ import sys
 import os
 from pathlib import Path
 
-# Add the project root to sys.path so we can import Client as a package
-sys.path.append(str(Path(__file__).parent.parent))
+# Package is expected to be run as 'python -m Client.main'
+# No sys.path manipulation needed if run correctly.
 
-from Client.config.settings import ConfigLoader
-from Client.core.agent import Agent
+from .config.settings import ConfigLoader
+from .core.agent import Agent
 
 def setup_logging():
     logging.basicConfig(
@@ -36,23 +36,19 @@ def main():
             config_loader.settings["model_path"] = args.model
 
         # Validate configuration
-        # For development/testing, we might want to skip strict validation
-        # if the user hasn't provided a model yet.
         try:
             config_loader.validate()
         except ValueError as e:
-            logging.warning(f"Configuration validation failed: {e}")
-            if not args.model and not config_loader.get("model_path"):
-                 logging.error("Please provide a model path via config file or --model argument.")
-                 # sys.exit(1) # Don't exit yet, let the user see the generated config
+            logging.error(f"Configuration validation failed: {e}")
+            sys.exit(1)
+
+        # Handle OS-level auto-start registration
+        config_loader.handle_autostart()
+        if config_loader.get("auto_start"):
+            logging.info("Auto-start registration updated in system.")
 
         # Initialize and Start Agent
         agent = Agent(config_loader)
-
-        # Check if auto_start intent is set
-        if config_loader.get("auto_start"):
-            logging.info("Auto-start is enabled in configuration.")
-
         agent.start()
 
     except Exception as e:
