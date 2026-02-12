@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+tests/test_config.json
+tests/test_high_memory.json
+Client/memory/high_memory.json
+Client/config/client_config.json

@@ -1,0 +1,12 @@
+# Auto.LLM User Context Information
+# Use this file to provide specific information about the machine to the LLM.
+# Format: Key: Value (or just plain text)
+# Lines starting with # are comments.
+
+Machine Password: [INSERT_PASSWORD_HERE]
+Server IP: 127.0.0.1
+Accessible Ports: 80, 443, 8000, 8080
+
+# Additional Context:
+# The LLM can use this information to perform tasks that require authentication
+# or network access.

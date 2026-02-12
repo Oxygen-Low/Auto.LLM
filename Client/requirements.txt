@@ -1,0 +1,5 @@
+llama-cpp-python
+pyautogui
+mss
+pillow
+python-xlib
