@@ -10,6 +10,8 @@ class ModelLoader:
         self.config = config
         self.text_model = None
         self.vision_model = None
+        self.vision_model_failed = False
+        self.vision_model_error = None
 
     def load_models(self):
         model_path = self.config.get("model_path")
@@ -52,6 +54,8 @@ class ModelLoader:
                     )
                     logging.info("Vision model loaded successfully.")
                 except Exception as e:
+                    self.vision_model_failed = True
+                    self.vision_model_error = e
                     logging.error(f"Failed to load vision model: {e}")
 
     def generate_completion(self, prompt, max_tokens=512, stop=None):
@@ -70,6 +74,8 @@ class ModelLoader:
         """
         Generates a description of the provided base64 image using the vision model.
         """
+        if self.vision_model_failed:
+            return f"Vision model failed to load: {self.vision_model_error}"
         if not self.vision_model:
              return "Vision model not configured."
 

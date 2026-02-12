@@ -1,8 +1,6 @@
 import argparse
 import logging
 import sys
-import os
-from pathlib import Path
 
 # Package is expected to be run as 'python -m Client.main'
 # No sys.path manipulation needed if run correctly.

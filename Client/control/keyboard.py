@@ -7,22 +7,23 @@ except ImportError:
     pyperclip = None
 
 def type_text(text, interval=0.05):
-    try:
-        # Check if text is ASCII
-        is_ascii = all(ord(c) < 128 for c in text)
-        if is_ascii:
+    # Check if text is ASCII
+    is_ascii = all(ord(c) < 128 for c in text)
+
+    if is_ascii:
+        try:
             logging.info("Typing text via pyautogui.write")
             pyautogui.write(text, interval=interval)
-        else:
-            _type_text_fallback(text)
-    except Exception as e:
-        logging.exception("Error in type_text: %s", e)
-        # Attempt fallback on failure
-        try:
-            _type_text_fallback(text)
-        except Exception as fallback_e:
-            logging.exception("Fallback type_text failed: %s", fallback_e)
-            raise
+            return
+        except Exception as e:
+            logging.exception("Error in pyautogui.write: %s. Attempting fallback.", e)
+
+    # Non-ASCII or failed ASCII write
+    try:
+        _type_text_fallback(text)
+    except Exception as fallback_e:
+        logging.exception("Fallback type_text failed: %s", fallback_e)
+        raise
 
 def _type_text_fallback(text):
     if pyperclip is None:

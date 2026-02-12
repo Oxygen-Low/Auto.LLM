@@ -18,6 +18,8 @@ DEFAULT_CONFIG = {
     "action_duration": 0.2
 }
 
+logger = logging.getLogger(__name__)
+
 class ConfigLoader:
     def __init__(self, config_path=None):
         if config_path is None:
@@ -37,9 +39,9 @@ class ConfigLoader:
                         if key in self.settings:
                             self.settings[key] = value
                         else:
-                            logging.warning(f"Unknown configuration key ignored: {key}")
+                            logger.warning(f"Unknown configuration key ignored: {key}")
             except Exception as e:
-                logging.error(f"Error loading config: {e}. Using defaults.")
+                logger.error(f"Error loading config: {e}. Using defaults.")
 
     def _save_config(self):
         try:
@@ -47,7 +49,7 @@ class ConfigLoader:
             with open(self.config_path, "w") as f:
                 json.dump(self.settings, f, indent=4)
         except Exception as e:
-            print(f"Error saving config: {e}")
+            logger.exception("Error saving config: %s", e)
 
     def handle_autostart(self):
         """Public method to trigger autostart configuration based on current settings."""
@@ -80,13 +82,13 @@ Comment=LLM Computer Control Client
                 with open(desktop_file, "w") as f:
                     f.write(content)
             except Exception as e:
-                print(f"Failed to set up Linux autostart: {e}")
+                logger.exception("Failed to set up Linux autostart: %s", e)
         else:
             if desktop_file.exists():
                 try:
                     desktop_file.unlink()
                 except Exception as e:
-                    print(f"Failed to remove Linux autostart: {e}")
+                    logger.exception("Failed to remove Linux autostart: %s", e)
 
     def validate(self):
         if not self.settings.get("model_path"):
@@ -110,5 +112,5 @@ Comment=LLM Computer Control Client
         elif not model_path.exists():
              raise ValueError(f"Configuration Error: model_path '{model_path}' does not exist.")
 
-    def get(self, key):
-        return self.settings.get(key)
+    def get(self, key, default=None):
+        return self.settings.get(key, default)

@@ -1,7 +1,7 @@
 import json
 import logging
 import time
-import traceback
+import re
 from .context import ContextBuilder
 from ..control.actions import ActionExecutor
 from ..control.screenshot import image_to_base64
@@ -53,7 +53,14 @@ class Agent:
         while self.running:
             try:
                 # 1. Capture State
-                screenshot = self.action_executor.execute({"action": "screenshot"})["result"]
+                response = self.action_executor.execute({"action": "screenshot"})
+                if response.get("status") == "error":
+                    raise RuntimeError(f"Failed to capture screenshot: {response.get('message')}")
+
+                screenshot = response.get("result")
+                if screenshot is None:
+                    raise RuntimeError("Screenshot action returned success but no result.")
+
                 base64_img = image_to_base64(screenshot)
 
                 observation = "New screenshot captured."
@@ -126,7 +133,6 @@ class Agent:
 
     def _parse_response(self, text):
         # 1. Look for fenced JSON blocks
-        import re
         fenced_match = re.search(r"```json\s*(.*?)\s*```", text, re.DOTALL)
         if fenced_match:
             try:

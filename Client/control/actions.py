@@ -35,6 +35,9 @@ class ActionExecutor:
         action_name = action_request.get("action")
         params = action_request.get("params", {})
 
+        if not isinstance(params, dict):
+            return {"status": "error", "message": f"Invalid params type: expected dict, got {type(params).__name__} for action {action_name}"}
+
         if action_name not in self.actions:
             return {"status": "error", "message": f"Unknown action: {action_name}"}
 

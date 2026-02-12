@@ -8,7 +8,9 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 class HighMemory:
-    def __init__(self, storage_path="Client/memory/high_memory.json", limit=10):
+    def __init__(self, storage_path=None, limit=10):
+        if storage_path is None:
+            storage_path = Path(__file__).resolve().parent / "high_memory.json"
         self.storage_path = Path(storage_path)
         self.limit = limit
         self.memories = self._load_memories()
@@ -23,13 +25,17 @@ class HighMemory:
             logger.exception("Error loading high memory: %s", e)
             return []
 
-    def _save_memories(self):
+    def _save_memories(self, memories_to_save):
         try:
             self.storage_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.storage_path, "w") as f:
-                json.dump(self.memories, f, indent=4)
+            # Use a temporary file for atomic write
+            temp_path = self.storage_path.with_suffix(".tmp")
+            with open(temp_path, "w") as f:
+                json.dump(memories_to_save, f, indent=4)
+            temp_path.replace(self.storage_path)
         except Exception as e:
             logger.exception("Error saving high memory: %s", e)
+            raise
 
     def add_memory(self, content, tags=None):
         if len(self.memories) >= self.limit:
@@ -41,13 +47,16 @@ class HighMemory:
             "created_timestamp": time.time(),
             "tags": tags or []
         }
-        self.memories.append(entry)
-        self._save_memories()
+
+        new_memories = self.memories + [entry]
+        self._save_memories(new_memories)
+        self.memories = new_memories
         return entry["id"]
 
     def remove_memory(self, memory_id):
-        self.memories = [m for m in self.memories if str(m["id"]) != str(memory_id)]
-        self._save_memories()
+        new_memories = [m for m in self.memories if str(m["id"]) != str(memory_id)]
+        self._save_memories(new_memories)
+        self.memories = new_memories
 
     def get_all(self):
         return self.memories.copy()

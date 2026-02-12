@@ -20,8 +20,11 @@ class MemoryManager:
 
         formatted = "Recent Events:\n"
         for e in events:
-            timestamp = time.strftime('%H:%M:%S', time.localtime(e['timestamp']))
-            formatted += f"[{timestamp}] {e['event_type'].upper()}: {e['content']}\n"
+            ts = e.get('timestamp', time.time())
+            timestamp = time.strftime('%H:%M:%S', time.localtime(ts))
+            event_type = e.get('event_type', 'unknown').upper()
+            content = e.get('content', '')
+            formatted += f"[{timestamp}] {event_type}: {content}\n"
         return formatted
 
     def format_high_memory_for_llm(self):

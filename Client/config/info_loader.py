@@ -1,5 +1,9 @@
 import os
+import logging
+import re
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 INFO_TEMPLATE = """# Auto.LLM User Context Information
 # Use this file to provide specific information about the machine to the LLM.
@@ -11,7 +15,6 @@ INFO_TEMPLATE = """# Auto.LLM User Context Information
 # Format: Key: Value (or just plain text)
 # Lines starting with # are comments.
 
-Machine Password: [INSERT_PASSWORD_HERE]
 Server IP: 127.0.0.1
 Accessible Ports: 80, 443, 8000, 8080
 """
@@ -26,20 +29,26 @@ def load_info(info_path=None):
             path.parent.mkdir(parents=True, exist_ok=True)
             with open(path, "w") as f:
                 f.write(INFO_TEMPLATE)
-            return INFO_TEMPLATE
+            content = INFO_TEMPLATE
         except Exception as e:
-            print(f"Error creating info.txt template: {e}")
+            logger.exception("Error creating info.txt template: %s", e)
+            return ""
+    else:
+        try:
+            with open(path, "r") as f:
+                content = f.read()
+        except Exception as e:
+            logger.exception("Error reading info.txt: %s", e)
             return ""
 
-    try:
-        with open(path, "r") as f:
-            content = f.read()
+    # Inject secrets from environment variables
+    # We replace any existing Machine Password line or append if not present
+    machine_password = os.environ.get("MACHINE_PASSWORD", "[NOT_SET]")
+    password_line = f"Machine Password: {machine_password}"
 
-        # Inject secrets from environment variables
-        machine_password = os.environ.get("MACHINE_PASSWORD", "[NOT_SET]")
-        content += f"\nMachine Password: {machine_password}\n"
+    if re.search(r"^Machine Password:.*", content, re.MULTILINE):
+        content = re.sub(r"^Machine Password:.*", password_line, content, flags=re.MULTILINE)
+    else:
+        content += f"\n{password_line}\n"
 
-        return content
-    except Exception as e:
-        print(f"Error reading info.txt: {e}")
-        return ""
+    return content
