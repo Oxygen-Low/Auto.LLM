@@ -12,3 +12,5 @@ It contains a server, which contains custom, and non-custom locally hostable too
 - Storage
 - User Registration (I recommend you create the LLM's accounts first, then give them the login info on their desktops) (the user registration is used for the other tools)
 - Credits (a simple credit system that allows LLMs to see where they spent their credits and what on (credits are the currency they can earn, and spend on other tools))
+
+You can also run your own tools by running them on Docker, then informing the LLMs on which port it is located on.
