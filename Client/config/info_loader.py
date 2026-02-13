@@ -27,9 +27,11 @@ def load_info(info_path=None):
     if not path.exists():
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
+            # Add placeholder to the generated file but not to the base template variable
+            content_with_placeholder = INFO_TEMPLATE + "\nMachine Password: [INSERT_PASSWORD_HERE]\n"
             with open(path, "w") as f:
-                f.write(INFO_TEMPLATE)
-            content = INFO_TEMPLATE
+                f.write(content_with_placeholder)
+            content = content_with_placeholder
         except Exception as e:
             logger.exception("Error creating info.txt template: %s", e)
             return ""

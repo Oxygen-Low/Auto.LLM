@@ -43,11 +43,12 @@ def main():
         # Handle OS-level auto-start registration
         config_loader.handle_autostart()
         if config_loader.get("auto_start"):
-            logging.info("Auto-start registration updated in system.")
-
-        # Initialize and Start Agent
-        agent = Agent(config_loader)
-        agent.start()
+            logging.info("Auto-start is enabled. Starting Agent.")
+            # Initialize and Start Agent
+            agent = Agent(config_loader)
+            agent.start()
+        else:
+            logging.info("Auto-start is disabled. Skipping Agent startup (only system registration was handled).")
 
     except Exception:
         logging.exception("Failed to start application")
