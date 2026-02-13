@@ -39,9 +39,9 @@ class ConfigLoader:
                         if key in self.settings:
                             self.settings[key] = value
                         else:
-                            logger.warning(f"Unknown configuration key ignored: {key}")
-            except Exception as e:
-                logger.error(f"Error loading config: {e}. Using defaults.")
+                            logger.warning("Unknown configuration key ignored: %s", key)
+            except Exception:
+                logger.exception("Error loading config; using defaults")
 
     def _save_config(self):
         try:
