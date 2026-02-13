@@ -43,8 +43,8 @@ def load_info(info_path=None):
 
     # Inject secrets from environment variables
     # We replace any existing Machine Password line or append if not present
-    machine_password = os.environ.get("MACHINE_PASSWORD", "[NOT_SET]")
-    password_line = f"Machine Password: {machine_password}"
+    # Note: We redact the actual password when returning info to be safe
+    password_line = "Machine Password: [REDACTED]"
 
     if re.search(r"^Machine Password:.*", content, re.MULTILINE):
         content = re.sub(r"^Machine Password:.*", password_line, content, flags=re.MULTILINE)

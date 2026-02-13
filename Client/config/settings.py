@@ -112,5 +112,28 @@ Comment=LLM Computer Control Client
         elif not model_path.exists():
              raise ValueError(f"Configuration Error: model_path '{model_path}' does not exist.")
 
+        # Validate vision settings if enabled
+        if self.settings.get("use_vision_model"):
+            for field in ["vision_model_path", "clip_model_path"]:
+                val = self.settings.get(field)
+                if not val:
+                    raise ValueError(f"Configuration Error: '{field}' is required when 'use_vision_model' is True.")
+
+                path = Path(val)
+                if not path.is_absolute():
+                    model_dir = Path(self.settings.get("model_directory", "models"))
+                    if not model_dir.is_absolute():
+                        model_dir = Path(__file__).parent.parent.parent / model_dir
+
+                    alt_path = model_dir / path
+                    if alt_path.exists():
+                        self.settings[field] = str(alt_path.absolute())
+                    elif path.exists():
+                        self.settings[field] = str(path.absolute())
+                    else:
+                        raise ValueError(f"Configuration Error: {field} '{path}' does not exist. (Required for ModelLoader/LlavaChatHandler)")
+                elif not path.exists():
+                    raise ValueError(f"Configuration Error: {field} '{path}' does not exist. (Required for ModelLoader/LlavaChatHandler)")
+
     def get(self, key, default=None):
         return self.settings.get(key, default)

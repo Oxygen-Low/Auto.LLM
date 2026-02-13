@@ -63,7 +63,6 @@ class Agent:
 
                 base64_img = image_to_base64(screenshot)
 
-                observation = "New screenshot captured."
                 if self.config.get("use_vision_model"):
                     logging.info("Generating screenshot description...")
                     description = self.model_loader.describe_image(base64_img)
@@ -91,7 +90,7 @@ class Agent:
                 if not isinstance(action_request, dict) or "action" not in action_request:
                     result = {"status": "error", "message": "Malformed action_request: missing 'action'"}
                 else:
-                    logging.info(f"Executing action: {action_request.get('action')}")
+                    logging.info("Executing action: %s", action_request.get("action"))
                     action_name = action_request["action"]
                     params = action_request.get("params", {})
 

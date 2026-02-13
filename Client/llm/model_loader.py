@@ -56,7 +56,7 @@ class ModelLoader:
                 except Exception as e:
                     self.vision_model_failed = True
                     self.vision_model_error = e
-                    logging.error(f"Failed to load vision model: {e}")
+                    logging.exception("Failed to load vision model")
 
     def generate_completion(self, prompt, max_tokens=512, stop=None):
         if not self.text_model:
@@ -90,7 +90,7 @@ class ModelLoader:
                     "role": "user",
                     "content": [
                         {"type": "text", "text": "Describe this computer screen for a text-based AI assistant. What do you see? What windows are open? What are the coordinates of important elements?"},
-                        {"type": "image_url", "image_url": f"data:image/png;base64,{base64_image}"}
+                        {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{base64_image}"}}
                     ]
                 }
             ]
@@ -112,3 +112,7 @@ class ModelLoader:
         if self.vision_model:
             del self.vision_model
             self.vision_model = None
+
+        # Reset failure states
+        self.vision_model_failed = False
+        self.vision_model_error = None

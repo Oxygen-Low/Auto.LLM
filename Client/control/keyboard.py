@@ -29,12 +29,25 @@ def _type_text_fallback(text):
     if pyperclip is None:
         raise ImportError("pyperclip is required for non-ASCII text fallback")
 
-    logging.info("Typing text via pyperclip fallback")
-    pyperclip.copy(text)
-    if sys.platform == "darwin":
-        pyautogui.hotkey("command", "v")
-    else:
-        pyautogui.hotkey("ctrl", "v")
+    original_clipboard = None
+    try:
+        original_clipboard = pyperclip.paste()
+    except Exception:
+        logging.debug("Could not save original clipboard")
+
+    try:
+        logging.info("Typing text via pyperclip fallback")
+        pyperclip.copy(text)
+        if sys.platform == "darwin":
+            pyautogui.hotkey("command", "v")
+        else:
+            pyautogui.hotkey("ctrl", "v")
+    finally:
+        if original_clipboard is not None:
+            try:
+                pyperclip.copy(original_clipboard)
+            except Exception:
+                logging.debug("Could not restore original clipboard")
 
 def press_key(key):
     try:

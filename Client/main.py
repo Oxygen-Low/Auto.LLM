@@ -21,7 +21,7 @@ def main():
     setup_logging()
 
     parser = argparse.ArgumentParser(description="Auto.LLM Client - LLM Computer Control")
-    parser.add_argument("--config", type=str, default="Client/config/client_config.json", help="Path to config file")
+    parser.add_argument("--config", type=str, default=None, help="Path to config file")
     parser.add_argument("--model", type=str, help="Override model path")
     args = parser.parse_args()
 
@@ -49,8 +49,8 @@ def main():
         agent = Agent(config_loader)
         agent.start()
 
-    except Exception as e:
-        logging.error(f"Failed to start application: {e}")
+    except Exception:
+        logging.exception("Failed to start application")
         sys.exit(1)
 
 if __name__ == "__main__":

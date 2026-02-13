@@ -20,7 +20,11 @@ class HighMemory:
             return []
         try:
             with open(self.storage_path, "r") as f:
-                return json.load(f)
+                data = json.load(f)
+                if not isinstance(data, list):
+                    logger.warning("High memory storage file does not contain a list. Got %s. Resetting to empty list.", type(data).__name__)
+                    return []
+                return data
         except Exception as e:
             logger.exception("Error loading high memory: %s", e)
             return []

@@ -22,7 +22,8 @@ class MemoryManager:
         for e in events:
             ts = e.get('timestamp', time.time())
             timestamp = time.strftime('%H:%M:%S', time.localtime(ts))
-            event_type = e.get('event_type', 'unknown').upper()
+            event_type_raw = e.get('event_type', 'unknown')
+            event_type = str(event_type_raw).upper() if event_type_raw else "UNKNOWN"
             content = e.get('content', '')
             formatted += f"[{timestamp}] {event_type}: {content}\n"
         return formatted

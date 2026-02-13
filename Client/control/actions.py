@@ -52,6 +52,12 @@ class ActionExecutor:
     def validate_request(self, action_request):
         if not isinstance(action_request, dict):
             return False, "Request must be a JSON object"
-        if "action" not in action_request:
+
+        action = action_request.get("action")
+        if action is None:
             return False, "Missing 'action' field"
+
+        if not isinstance(action, str) or not action.strip():
+            return False, "Invalid 'action' field: must be a non-empty string"
+
         return True, ""
