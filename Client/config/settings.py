@@ -48,8 +48,8 @@ class ConfigLoader:
             self.config_path.parent.mkdir(parents=True, exist_ok=True)
             with open(self.config_path, "w") as f:
                 json.dump(self.settings, f, indent=4)
-        except Exception as e:
-            logger.exception("Error saving config: %s", e)
+        except Exception:
+            logger.exception("Error saving config")
 
     def handle_autostart(self):
         """Public method to trigger autostart configuration based on current settings."""
@@ -81,14 +81,14 @@ Comment=LLM Computer Control Client
 """
                 with open(desktop_file, "w") as f:
                     f.write(content)
-            except Exception as e:
-                logger.exception("Failed to set up Linux autostart: %s", e)
+            except Exception:
+                logger.exception("Failed to set up Linux autostart")
         else:
             if desktop_file.exists():
                 try:
                     desktop_file.unlink()
-                except Exception as e:
-                    logger.exception("Failed to remove Linux autostart: %s", e)
+                except Exception:
+                    logger.exception("Failed to remove Linux autostart")
 
     def _resolve_model_path(self, path_str, field_name):
         if not path_str:
@@ -102,15 +102,15 @@ Comment=LLM Computer Control Client
 
             alt_path = model_dir / path
             if alt_path.exists():
-                return str(alt_path.absolute())
+                return str(alt_path.resolve())
             elif path.exists():
-                return str(path.absolute())
+                return str(path.resolve())
             else:
                 raise ValueError(f"Configuration Error: {field_name} '{path}' does not exist.")
         elif not path.exists():
             raise ValueError(f"Configuration Error: {field_name} '{path}' does not exist.")
 
-        return str(path.absolute())
+        return str(path.resolve())
 
     def validate(self):
         self.settings["model_path"] = self._resolve_model_path(
