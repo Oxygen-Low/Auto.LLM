@@ -59,8 +59,12 @@ class HighMemory:
 
     def remove_memory(self, memory_id):
         new_memories = [m for m in self.memories if str(m["id"]) != str(memory_id)]
+        if len(new_memories) == len(self.memories):
+            return False
+
         self._save_memories(new_memories)
         self.memories = new_memories
+        return True
 
     def get_all(self):
         return self.memories.copy()

@@ -42,13 +42,11 @@ def load_info(info_path=None):
             return ""
 
     # Inject secrets from environment variables
-    # We replace any existing Machine Password line or append if not present
+    # We replace any existing Machine Password line
     # Note: We redact the actual password when returning info to be safe
     password_line = "Machine Password: [REDACTED]"
 
     if re.search(r"^Machine Password:.*", content, re.MULTILINE):
         content = re.sub(r"^Machine Password:.*", password_line, content, flags=re.MULTILINE)
-    else:
-        content += f"\n{password_line}\n"
 
     return content

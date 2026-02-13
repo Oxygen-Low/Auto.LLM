@@ -14,8 +14,8 @@ def move_to(x, y, duration=0.2):
     try:
         validate_coordinates(x, y)
         pyautogui.moveTo(x, y, duration=duration)
-    except Exception as e:
-        logging.exception("Error in move_to: %s", e)
+    except Exception:
+        logging.exception("Error in move_to")
         raise
 
 def left_click(x=None, y=None, duration=0.1):
@@ -26,8 +26,8 @@ def left_click(x=None, y=None, duration=0.1):
         if x is not None and y is not None:
             move_to(x, y, duration=duration)
         pyautogui.click()
-    except Exception as e:
-        logging.exception("Error in left_click: %s", e)
+    except Exception:
+        logging.exception("Error in left_click")
         raise
 
 def right_click(x=None, y=None, duration=0.1):
@@ -38,8 +38,8 @@ def right_click(x=None, y=None, duration=0.1):
         if x is not None and y is not None:
             move_to(x, y, duration=duration)
         pyautogui.rightClick()
-    except Exception as e:
-        logging.exception("Error in right_click: %s", e)
+    except Exception:
+        logging.exception("Error in right_click")
         raise
 
 def drag(start_x, start_y, end_x, end_y, button='left', duration=0.5):
@@ -48,6 +48,6 @@ def drag(start_x, start_y, end_x, end_y, button='left', duration=0.5):
         validate_coordinates(end_x, end_y)
         pyautogui.moveTo(start_x, start_y)
         pyautogui.dragTo(end_x, end_y, duration=duration, button=button)
-    except Exception as e:
-        logging.exception("Error in drag: %s", e)
+    except Exception:
+        logging.exception("Error in drag")
         raise

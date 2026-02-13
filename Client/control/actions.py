@@ -32,7 +32,8 @@ class ActionExecutor:
         if not is_valid:
             return {"status": "error", "message": f"Invalid request: {error_msg}"}
 
-        action_name = action_request.get("action")
+        action_name_raw = action_request.get("action")
+        action_name = str(action_name_raw).strip()
         params = action_request.get("params", {})
 
         if not isinstance(params, dict):

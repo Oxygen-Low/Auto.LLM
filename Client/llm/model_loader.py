@@ -19,7 +19,7 @@ class ModelLoader:
             raise ValueError("model_path not specified in config")
 
         try:
-            logging.info(f"Loading text model from {model_path}...")
+            logging.info("Loading text model from %s...", model_path)
             self.text_model = Llama(
                 model_path=model_path,
                 n_ctx=self.config.get("context_size", 2048),
@@ -27,8 +27,8 @@ class ModelLoader:
                 verbose=False
             )
             logging.info("Text model loaded successfully.")
-        except Exception as e:
-            logging.error(f"Failed to load text model: {e}")
+        except Exception:
+            logging.exception("Failed to load text model")
             raise
 
         if self.config.get("use_vision_model"):
@@ -41,10 +41,10 @@ class ModelLoader:
                 try:
                     chat_handler = None
                     if clip_model_path and LlavaChatHandler:
-                        logging.info(f"Initializing vision chat handler with {clip_model_path}...")
+                        logging.info("Initializing vision chat handler with %s...", clip_model_path)
                         chat_handler = LlavaChatHandler(clip_model_path=clip_model_path)
 
-                    logging.info(f"Loading vision model from {vision_model_path}...")
+                    logging.info("Loading vision model from %s...", vision_model_path)
                     self.vision_model = Llama(
                         model_path=vision_model_path,
                         chat_handler=chat_handler,
@@ -77,7 +77,7 @@ class ModelLoader:
         if self.vision_model_failed:
             return f"Vision model failed to load: {self.vision_model_error}"
         if not self.vision_model:
-             return "Vision model not configured."
+            return "Vision model not configured."
 
         # Note: For multi-modal GGUF (like LLaVA), llama-cpp-python typically needs
         # a CLIP adapter. This implementation assumes the vision_model is either
@@ -102,7 +102,7 @@ class ModelLoader:
             )
             return response['choices'][0]['message']['content']
         except Exception as e:
-            logging.exception("Vision description failed: %s", e)
+            logging.exception("Vision description failed")
             return f"Error describing image: {e}"
 
     def unload_models(self):

@@ -76,6 +76,10 @@ class Agent:
                 # 3. Query LLM
                 logging.info("Querying LLM...")
                 response_text = self.model_loader.generate_completion(prompt)
+                if response_text is None:
+                    logging.error("LLM generate_completion returned None.")
+                    response_text = ""
+
                 logging.debug("LLM Response (full): %s", response_text)
                 logging.info("LLM Response (truncated): %s", response_text[:100] + ("..." if len(response_text) > 100 else ""))
 

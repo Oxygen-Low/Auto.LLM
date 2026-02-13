@@ -1,6 +1,7 @@
 import pyautogui
 import logging
 import sys
+import time
 try:
     import pyperclip
 except ImportError:
@@ -42,6 +43,7 @@ def _type_text_fallback(text):
             pyautogui.hotkey("command", "v")
         else:
             pyautogui.hotkey("ctrl", "v")
+        time.sleep(0.05)
     finally:
         if original_clipboard is not None:
             try:

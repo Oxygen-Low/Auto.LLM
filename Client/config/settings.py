@@ -90,50 +90,39 @@ Comment=LLM Computer Control Client
                 except Exception as e:
                     logger.exception("Failed to remove Linux autostart: %s", e)
 
-    def validate(self):
-        if not self.settings.get("model_path"):
-            raise ValueError("Configuration Error: 'model_path' is required.")
+    def _resolve_model_path(self, path_str, field_name):
+        if not path_str:
+            raise ValueError(f"Configuration Error: '{field_name}' is required.")
 
-        model_path = Path(self.settings["model_path"])
-        if not model_path.is_absolute():
-            # Try relative to model_directory if it's set
+        path = Path(path_str)
+        if not path.is_absolute():
             model_dir = Path(self.settings.get("model_directory", "models"))
             if not model_dir.is_absolute():
-                # Assuming model_dir is relative to project root (parent of Client/)
-                model_dir = Path(__file__).parent.parent.parent / model_dir
+                model_dir = Path(__file__).resolve().parent.parent.parent / model_dir
 
-            alt_path = model_dir / model_path
+            alt_path = model_dir / path
             if alt_path.exists():
-                self.settings["model_path"] = str(alt_path.absolute())
-            elif model_path.exists():
-                self.settings["model_path"] = str(model_path.absolute())
+                return str(alt_path.absolute())
+            elif path.exists():
+                return str(path.absolute())
             else:
-                raise ValueError(f"Configuration Error: model_path '{model_path}' does not exist.")
-        elif not model_path.exists():
-             raise ValueError(f"Configuration Error: model_path '{model_path}' does not exist.")
+                raise ValueError(f"Configuration Error: {field_name} '{path}' does not exist.")
+        elif not path.exists():
+            raise ValueError(f"Configuration Error: {field_name} '{path}' does not exist.")
+
+        return str(path.absolute())
+
+    def validate(self):
+        self.settings["model_path"] = self._resolve_model_path(
+            self.settings.get("model_path"), "model_path"
+        )
 
         # Validate vision settings if enabled
         if self.settings.get("use_vision_model"):
             for field in ["vision_model_path", "clip_model_path"]:
-                val = self.settings.get(field)
-                if not val:
-                    raise ValueError(f"Configuration Error: '{field}' is required when 'use_vision_model' is True.")
-
-                path = Path(val)
-                if not path.is_absolute():
-                    model_dir = Path(self.settings.get("model_directory", "models"))
-                    if not model_dir.is_absolute():
-                        model_dir = Path(__file__).parent.parent.parent / model_dir
-
-                    alt_path = model_dir / path
-                    if alt_path.exists():
-                        self.settings[field] = str(alt_path.absolute())
-                    elif path.exists():
-                        self.settings[field] = str(path.absolute())
-                    else:
-                        raise ValueError(f"Configuration Error: {field} '{path}' does not exist. (Required for ModelLoader/LlavaChatHandler)")
-                elif not path.exists():
-                    raise ValueError(f"Configuration Error: {field} '{path}' does not exist. (Required for ModelLoader/LlavaChatHandler)")
+                self.settings[field] = self._resolve_model_path(
+                    self.settings.get(field), field
+                )
 
     def get(self, key, default=None):
         return self.settings.get(key, default)
