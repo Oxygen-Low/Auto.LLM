@@ -32,15 +32,15 @@ def load_info(info_path=None):
             with open(path, "w") as f:
                 f.write(content_with_placeholder)
             content = content_with_placeholder
-        except Exception as e:
-            logger.exception("Error creating info.txt template: %s", e)
+        except Exception:
+            logger.exception("Error creating info.txt template")
             return ""
     else:
         try:
             with open(path, "r") as f:
                 content = f.read()
-        except Exception as e:
-            logger.exception("Error reading info.txt: %s", e)
+        except Exception:
+            logger.exception("Error reading info.txt")
             return ""
 
     # Inject secrets from environment variables

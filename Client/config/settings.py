@@ -69,7 +69,7 @@ class ConfigLoader:
                 # We assume main.py is in the parent of the config directory
                 # But since we're in Client/config, it's in Client/
                 script_path = Path(__file__).parent.parent / "main.py"
-                exec_command = f"{shlex.quote(sys.executable)} {shlex.quote(str(script_path.absolute()))}"
+                exec_command = f"{shlex.quote(sys.executable)} {shlex.quote(str(script_path.resolve()))}"
                 content = f"""[Desktop Entry]
 Type=Application
 Exec={exec_command}
